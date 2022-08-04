@@ -15,7 +15,7 @@ const options = {
 };
 
 // Connection MongoDB URL
-const url = "mongodb://username:password@localhost:port/dbName";
+const url = "mongodb://127.0.0.1:27017/tdsmongodb";
 
 // ElasticSearch Client
 const esClient = new elasticsearch.Client({
@@ -60,41 +60,15 @@ const getDocument = (db, collections) =>
         # 2. all - migration all collection moongodb           #
         ########################################################
     `)
-        const type = await readlineSync.question(
-            "Choose your migration type (all/custom) : "
-        );
+
         const db = await client.db();
         const errorDoc = [];
 
         let allCollection;
         let success;
 
-        if (type == "custom") {
-            console.log(`
-        You choose migrating with custom collection.
-        Please input Collection split by commas, Example : coll1,coll2
-       `);
-            const coll = await readlineSync.question("Input your collection : ");
-            const dataCol = [];
-            if (coll.includes(",")) {
-                const col = coll.split(",");
-                col.map(datas => {
-                    dataCol.push({
-                        name: datas
-                    });
-                });
-                allCollection = dataCol;
-            } else {
-                allCollection = [{ name: coll }];
-            }
-        } else if ("all") {
-            allCollection = await getAllCollections(db);
-        } else {
-            console.log(
-                "You not choose right type, please try again with all/custom"
-            );
-            process.exit();
-        }
+        const dataCol = [{name: "tds_customer_order_dosir_number_suggestion"}];
+        allCollection = dataCol;
 
         console.log("Collection Total : ", allCollection.length + "\n");
         for (let index = 0; index < allCollection.length; index++) {
@@ -117,20 +91,15 @@ const getDocument = (db, collections) =>
                 if (document.length > 0) {
                     let insertToES;
                     for (let indexx = 0; indexx < document.length; indexx++) {
-                        const doc = document[indexx];
+                        const doc = document[indexx]['_source'];
                         const count = indexx + 1;
-                        delete doc._id;
-                        const regex = new RegExp(/\"\"/gi);
-                        const checkDoc = regex.exec(JSON.stringify(doc));
-                        let newDoc;
-                        if (!checkDoc) {
-                            newDoc = doc;
-                        } else {
-                            console.log(`Some field have null value.`)
-                            const string = JSON.stringify(doc).replace(/\"\"/gi, null);
-                            const fixStr = string.replace(/\r\n|\r|\n/g, "");
-                            newDoc = JSON.parse(fixStr);
-                            //  newDoc = JSON.parse(string)
+                        let newDoc = {
+                            userId: doc.userId ? doc.userId : '',
+                            dosirNumber: doc.numberDosir ? doc.numberDosir : '',
+                            serviceName: doc.serviceName ? doc.serviceName : '',
+                            location: doc.location ? doc.location : '',
+                            createdAt: doc.createdAt,
+                            updatedAt: doc.updatedAt
                         }
                         console.log(
                             `Progress uploading document ${collection.name} ${chalk.green(
@@ -138,7 +107,7 @@ const getDocument = (db, collections) =>
               )} from ${chalk.green(document.length)}`
                         );
                         const body = [{
-                                index: { _index: collection.name.toLowerCase(), _type: "doc" }
+                                index: { _index: collection.name.toLowerCase(), _type: "doc", _id: document[indexx]['_id'] }
                             },
                             newDoc
                         ];
