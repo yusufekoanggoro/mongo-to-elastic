@@ -22,16 +22,6 @@ const esClient = new elasticsearch.Client({
     host: "localhost:9200"
 });
 
-const getAllCollections = db =>
-    new Promise((resolve, reject) => {
-        db.listCollections().toArray(function(err, collInfos) {
-            if (err) {
-                reject(err);
-            }
-            resolve(collInfos);
-        });
-    });
-
 const getDocument = (db, collections) =>
     new Promise((resolve, reject) => {
         const allRecords = db
@@ -52,14 +42,6 @@ const getDocument = (db, collections) =>
    `);
     try {
         const client = await MongoClient.connect(url, options);
-        console.log(`
-        ########################################################
-        # What is migration type ?                             #
-        # in this tools u can choose type of migration :       #
-        # 1. custom - migration with custom collection mongodb #
-        # 2. all - migration all collection moongodb           #
-        ########################################################
-    `)
 
         const db = await client.db();
         const errorDoc = [];
