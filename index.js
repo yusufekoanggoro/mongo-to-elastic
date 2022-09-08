@@ -57,8 +57,8 @@ const getDocument = (db, collections) =>
             {name: "tds_customer_notification_order_assurance", _id: false}, // WITHOUT _ID
             {name: "tds_customer_order_dosir_number_suggestion", _id: true},
             {name: "tds_customer_notification_contract_documents_assurance", _id: false}, // WITHOUT _ID
-            {name: "notification_am", _id: true},
-            {name: "order_dwhnas_new", _id: true}, 
+            {name: "tds_customer_notification_am", _id: true},
+            {name: "tds_customer_order_dwhnas_new", _id: true}, 
         ];
         allCollection = dataCol;
 
