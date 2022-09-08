@@ -49,25 +49,31 @@ const getDocument = (db, collections) =>
         let allCollection;
         let success;
 
-        const dataCol = [{name: "tds_customer_order_dosir_number_suggestion"}];
+        const dataCol = [
+            {name: "ticket", _id: true}, 
+            {name: "ticket_detail", _id: true}, 
+            {name: "ticket_nossa", _id: true}, 
+            {name: "tds_customer_notification_ifrs_detail", _id: true},
+            {name: "tds_customer_notification_order_assurance", _id: false}, // WITHOUT _ID
+            {name: "tds_customer_order_dosir_number_suggestion", _id: true},
+            {name: "tds_customer_notification_contract_documents_assurance", _id: false}, // WITHOUT _ID
+            {name: "notification_am", _id: true},
+            {name: "order_dwhnas_new", _id: true}, 
+        ];
         allCollection = dataCol;
 
         console.log("Collection Total : ", allCollection.length + "\n");
         for (let index = 0; index < allCollection.length; index++) {
             const collection = allCollection[index];
             console.log(
-                `Progress ${chalk.green(index + 1)} from ${chalk.green(
-          allCollection.length
-        )}`
+                `Progress ${chalk.green(index + 1)} from ${chalk.green(allCollection.length)}`
             );
             console.log(`Getting document from collection : `, collection.name);
             await delay(5000);
             const document = await getDocument(db, collection.name);
             console.log(`Total document from collection : `, document.length);
             console.log(
-                `Try inserting document ${chalk.green(
-          collection.name
-        )} to elasticsearch.`
+                `Try inserting document ${chalk.green(collection.name)} to elasticsearch.`
             );
             try {
                 if (document.length > 0) {
@@ -75,24 +81,17 @@ const getDocument = (db, collections) =>
                     for (let indexx = 0; indexx < document.length; indexx++) {
                         const doc = document[indexx]['_source'];
                         const count = indexx + 1;
-                        let newDoc = {
-                            userId: doc.userId ? doc.userId : '',
-                            dosirNumber: doc.numberDosir ? doc.numberDosir : '',
-                            serviceName: doc.serviceName ? doc.serviceName : '',
-                            location: doc.location ? doc.location : '',
-                            createdAt: doc.createdAt,
-                            updatedAt: doc.updatedAt
-                        }
+                        let newDoc = { ...doc }
                         console.log(
-                            `Progress uploading document ${collection.name} ${chalk.green(
-                count
-              )} from ${chalk.green(document.length)}`
+                            `Progress uploading document ${collection.name} ${chalk.green(count)} from ${chalk.green(document.length)}`
                         );
-                        const body = [{
-                                index: { _index: collection.name.toLowerCase(), _type: "doc", _id: document[indexx]['_id'] }
-                            },
-                            newDoc
-                        ];
+
+                        let indexConfig = {
+                            index: { _index: collection.name.toLowerCase(), _type: "doc" }
+                        }
+                        if(collection._id) indexConfig.index._id = document[indexx]['_id'];
+
+                        const body = [ indexConfig, newDoc ];
                         insertToES = await esClient.bulk({ body: body });
                         if (insertToES.errors == true) {
                             errorDoc.push({
